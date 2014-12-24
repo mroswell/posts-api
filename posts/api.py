@@ -7,6 +7,8 @@ import models
 import decorators
 from posts import app
 from database import session
+from sqlalchemy import or_, and_
+
 
 # @app.route("/api/posts", methods=["GET"])
 # def posts_get():
@@ -24,10 +26,14 @@ def posts_get():
     """ Get a list of posts """
     # Get the querystring arguments
     title_like = request.args.get("title_like")
+    body_like = request.args.get("body_like")
 
     # Get and filter the posts from the database
     posts = session.query(models.Post)
-    if title_like:
+
+    if title_like and body_like:
+        posts = posts.filter(and_(models.Post.title.contains(title_like), models.Post.body.contains(body_like)))
+    elif title_like:
         posts = posts.filter(models.Post.title.contains(title_like))
     posts = posts.all()
 
@@ -61,7 +67,7 @@ def post_get(id):
 #     session.commit()
 #     return redirect(url_for("posts"))
 
-@app.route("/api/posts/<int:id>/delete", methods=["GET"])
+@app.route("/api/posts/<int:id>", methods=["DELETE"])
 def delete_post_get(id):
     post = session.query(models.Post).get(id)
     # Check whether the post exists
